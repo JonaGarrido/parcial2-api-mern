@@ -21,7 +21,7 @@ Para correr el proyecto se necesita tener instalado:
 ### 2. Instalación del proyecto
 - Clonar el repositorio:
 ```text
-git clone https://github.com/ManuelaRamdan/parcial2-api-mern.git
+git clone https://github.com/JonaGarrido/parcial2-api-mern
 ```
 - Acceder a la carpeta del proyecto:
 ```text
