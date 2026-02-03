@@ -105,7 +105,7 @@ const actualizarNotasAsistenciasDelAlumno = async (req, res, next) => {
       throw error;
     }
 
-    
+
     const campoNoPermitido = materias.find(m => {
       const claves = Object.keys(m);
       return claves.some(
@@ -119,21 +119,21 @@ const actualizarNotasAsistenciasDelAlumno = async (req, res, next) => {
             "notas",
             "asistencias",
           ].includes(k)
-        );
-      });
-      
-      if (campoNoPermitido) {
-        const error = new Error(
-          "Solo se pueden enviar idCurso, nombreCurso, division, nivel, anio,  notas y asistencias"
-        );
-        error.statusCode = 403;
-        throw error;
-      }
-      
-      const materiasDelProfe = await Curso.find({
-        "profesor.id": ObjectId.createFromHexString(profesorId),
-      }).select("idCurso nombreMateria division nivel anio");
-      
+      );
+    });
+
+    if (campoNoPermitido) {
+      const error = new Error(
+        "Solo se pueden enviar idCurso, nombreCurso, division, nivel, anio,  notas y asistencias"
+      );
+      error.statusCode = 403;
+      throw error;
+    }
+
+    const materiasDelProfe = await Curso.find({
+      "profesor.id": ObjectId.createFromHexString(profesorId),
+    }).select("idCurso nombreMateria division nivel anio");
+
     const materiasInvalidas = materias.filter(m => {
       return !materiasDelProfe.some(md =>
         m.idCurso
@@ -151,7 +151,7 @@ const actualizarNotasAsistenciasDelAlumno = async (req, res, next) => {
       throw error;
     }
 
-    const datosPermitidos = {
+    /*const datosPermitidos = {
       materias: materias.map(m => ({
         idCurso: m.idCurso,
         nombreMateria: m.nombreMateria,
@@ -162,6 +162,38 @@ const actualizarNotasAsistenciasDelAlumno = async (req, res, next) => {
         notas: Array.isArray(m.notas) ? m.notas : [],
         asistencias: Array.isArray(m.asistencias) ? m.asistencias : [],
       })),
+    };*/
+
+    const datosPermitidos = {
+      materias: materias.map(m => {
+        const materiaAlumno = alumno.materias.find(mat =>
+          m.idCurso
+            ? mat.idCurso?.toString() === m.idCurso
+            : mat.nombreMateria === m.nombreMateria &&
+            mat.division === m.division &&
+            mat.nivel === m.nivel &&
+            mat.anio === m.anio
+        );
+
+        return {
+          idCurso: m.idCurso,
+          nombreMateria: m.nombreMateria,
+          division: m.division,
+          nivel: m.nivel,
+          anio: m.anio,
+          profesor: { _id: profesorId, nombre: m.profesor?.nombre || "" },
+
+          // SI VIENEN NOTAS, SE ACTUALIZAN. SI NO, SE CONSERVAN.
+          notas: Array.isArray(m.notas)
+            ? m.notas
+            : materiaAlumno?.notas || [],
+
+          // SI VIENEN ASISTENCIAS, SE ACTUALIZAN. SI NO, SE CONSERVAN.
+          asistencias: Array.isArray(m.asistencias)
+            ? m.asistencias
+            : materiaAlumno?.asistencias || [],
+        };
+      }),
     };
 
     const alumnoActualizado = await actualizarAlumno(alumnoId, datosPermitidos);
