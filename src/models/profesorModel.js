@@ -16,18 +16,20 @@ const profesorSchema = new mongoose.Schema({
                     activo: { type: Boolean, default: true },
                     notas: [
                         {
-                            tipo: { type: String, required: true },
-                            nota: { type: Number, required: true }
+                            tipo: { type: String},
+                            nota: { type: Number }
                         }
                     ],
                     asistencias: [
                         {
-                            fecha: { type: Date, required: true },
-                            presente: { type: String, required: true }
+                            fecha: { type: Date},
+                            tipo: { type: String},
+                            observacion: { type: String}
                         }
                     ]
                 }
-            ]
+            ],
+            dias: { type: [String], required: true }
         }
     ]
 });

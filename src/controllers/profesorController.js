@@ -77,6 +77,8 @@ const getProfesorById = async (req, res, next) => {
 
 
 const actualizarNotasAsistenciasDelAlumno = async (req, res, next) => {
+  console.log("BODY RECIBIDO:", JSON.stringify(req.body, null, 2));
+
   try {
     const dni = req.params.dni;
     const { materias } = req.body;
@@ -105,6 +107,20 @@ const actualizarNotasAsistenciasDelAlumno = async (req, res, next) => {
       throw error;
     }
 
+    // ===== BLINDAJE DE ESTRUCTURA =====
+    materias.forEach(m => {
+      if (m.hasOwnProperty("notas") && !Array.isArray(m.notas)) {
+        const error = new Error("El campo 'notas' debe ser un array");
+        error.statusCode = 400;
+        throw error;
+      }
+
+      if (m.hasOwnProperty("asistencias") && !Array.isArray(m.asistencias)) {
+        const error = new Error("El campo 'asistencias' debe ser un array");
+        error.statusCode = 400;
+        throw error;
+      }
+    });
 
     const campoNoPermitido = materias.find(m => {
       const claves = Object.keys(m);
@@ -112,7 +128,7 @@ const actualizarNotasAsistenciasDelAlumno = async (req, res, next) => {
         k =>
           ![
             "idCurso",
-            "nombreCurso",
+            "nombreMateria",
             "division",
             "nivel",
             "anio",
@@ -124,7 +140,7 @@ const actualizarNotasAsistenciasDelAlumno = async (req, res, next) => {
 
     if (campoNoPermitido) {
       const error = new Error(
-        "Solo se pueden enviar idCurso, nombreCurso, division, nivel, anio,  notas y asistencias"
+        "Solo se pueden enviar idCurso, nombreMateria, division, nivel, anio,  notas y asistencias"
       );
       error.statusCode = 403;
       throw error;
@@ -133,6 +149,10 @@ const actualizarNotasAsistenciasDelAlumno = async (req, res, next) => {
     const materiasDelProfe = await Curso.find({
       "profesor.id": ObjectId.createFromHexString(profesorId),
     }).select("idCurso nombreMateria division nivel anio");
+
+    console.log("ID del profesor logueado:", profesorId);
+    console.log("Materias enviadas por el frontend:", JSON.stringify(materias, null, 2));
+    console.log("Materias que dicta el profesor en DB:", JSON.stringify(materiasDelProfe, null, 2));
 
     const materiasInvalidas = materias.filter(m => {
       return !materiasDelProfe.some(md =>
@@ -146,6 +166,7 @@ const actualizarNotasAsistenciasDelAlumno = async (req, res, next) => {
     });
 
     if (materiasInvalidas.length > 0) {
+      console.log("Materias inválidas detectadas:", materiasInvalidas);
       const error = new Error("Solo se pueden modificar materias que dicta el profesor logueado");
       error.statusCode = 403;
       throw error;
@@ -183,13 +204,12 @@ const actualizarNotasAsistenciasDelAlumno = async (req, res, next) => {
           anio: m.anio,
           profesor: { _id: profesorId, nombre: m.profesor?.nombre || "" },
 
-          // SI VIENEN NOTAS, SE ACTUALIZAN. SI NO, SE CONSERVAN.
-          notas: Array.isArray(m.notas)
+          // SOLO pisa si el campo EXISTE en el payload
+          notas: m.hasOwnProperty("notas")
             ? m.notas
             : materiaAlumno?.notas || [],
 
-          // SI VIENEN ASISTENCIAS, SE ACTUALIZAN. SI NO, SE CONSERVAN.
-          asistencias: Array.isArray(m.asistencias)
+          asistencias: m.hasOwnProperty("asistencias")
             ? m.asistencias
             : materiaAlumno?.asistencias || [],
         };

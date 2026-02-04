@@ -62,7 +62,7 @@ const actualizarAlumno = async (id, actualizarDatos) => {
                 mu => mu.idCurso.toString() === materia.idCurso.toString()
             );
 
-            return materiaUpdate
+            /*return materiaUpdate
                 ? {
                     ...materia,
                     notas: actualizarNotas(materia.notas ?? [], materiaUpdate.notas ?? []),
@@ -70,6 +70,27 @@ const actualizarAlumno = async (id, actualizarDatos) => {
                         materia.asistencias ?? [],
                         materiaUpdate.asistencias ?? []
                     ),
+                }
+                : materia;
+            */
+
+            return materiaUpdate
+                ? {
+                    ...materia,
+
+                    notas: materiaUpdate.hasOwnProperty("notas")
+                        ? actualizarNotas(
+                            materia.notas ?? [],
+                            materiaUpdate.notas
+                        )
+                        : materia.notas,
+
+                    asistencias: materiaUpdate.hasOwnProperty("asistencias")
+                        ? actualizarAsistencias(
+                            materia.asistencias ?? [],
+                            materiaUpdate.asistencias
+                        )
+                        : materia.asistencias,
                 }
                 : materia;
         });
@@ -103,7 +124,7 @@ const actualizarNotas = (notasActuales, notasNuevas) => {
 };
 
 
-const actualizarAsistencias = (asisActuales, asisNuevas) => {
+/*const actualizarAsistencias = (asisActuales, asisNuevas) => {
     if (!Array.isArray(asisNuevas)) return asisActuales;
 
     // Validación mínima sin loops:
@@ -127,6 +148,42 @@ const actualizarAsistencias = (asisActuales, asisNuevas) => {
 
     // ✔ REEMPLAZO TOTAL
     return asistenciasFinal;
+};*/
+
+const actualizarAsistencias = (asisActuales = [], asisNuevas = []) => {
+    if (!Array.isArray(asisNuevas)) return asisActuales;
+
+    // Validación mínima
+    const esValido =
+        asisNuevas.length === 0 ||
+        JSON.stringify(asisNuevas).match(/"fecha":/) !== null;
+
+    if (!esValido) {
+        const error = new Error("Formato inválido en asistencias");
+        error.statusCode = 422;
+        throw error;
+    }
+
+    // Convertir fechas a ISO
+    const asistenciasProcesadas = asisNuevas.map(a => ({
+        ...a,
+        fecha: new Date(a.fecha).toISOString(),
+    }));
+
+    // Merge: usar Map para evitar duplicados por fecha
+    const mapa = new Map();
+
+    // Primero las existentes
+    asisActuales.forEach(a => {
+        mapa.set(new Date(a.fecha).toISOString(), a);
+    });
+
+    // Luego las nuevas (sobrescriben si la fecha coincide)
+    asistenciasProcesadas.forEach(a => {
+        mapa.set(a.fecha, a);
+    });
+
+    return Array.from(mapa.values());
 };
 
 

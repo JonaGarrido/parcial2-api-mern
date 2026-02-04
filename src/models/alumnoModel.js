@@ -21,7 +21,8 @@ const alumnoSchema = new mongoose.Schema({
       asistencias: [
         {
           fecha: { type: Date },
-          presente: { type: String }
+          tipo: { type: String },
+          observacion: { type: String }
         }
       ],
 

@@ -6,7 +6,7 @@ const cursoSchema = new mongoose.Schema({
     nivel: { type: Number, required: true }, 
     anio: { type: Number, required: true },        
     profesor: {
-        _id: { type: mongoose.Schema.Types.ObjectId, ref: "Profesor", required: true },
+        id: { type: mongoose.Schema.Types.ObjectId, ref: "Profesor", required: true },
         nombre: { type: String, required: true }
     },
     alumnos: [
