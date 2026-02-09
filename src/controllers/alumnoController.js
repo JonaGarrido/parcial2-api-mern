@@ -9,7 +9,7 @@ const paginate = require("../utils/paginar");
 const getAllAlumnos = async (req, res, next) => {
     try {
         const result = await paginate(Alumno, req, {
-            query: { activo: true },
+            //query: { activo: true }, LO SAQUE SINO ME FILTRABA INACTIVOS AL ADMIN
             sort: { nombre: 1 }
         });
 

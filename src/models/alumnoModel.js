@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const alumnoSchema = new mongoose.Schema({
   nombre: { type: String },
-  materias: [
+  cursos: [
     {
       idCurso: { type: mongoose.Schema.Types.ObjectId, ref: "Curso" },
       nombreCurso: { type: String },
